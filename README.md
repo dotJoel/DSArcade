@@ -39,6 +39,8 @@ Counted:
   (1000+), `solid` (600–999) or `drill` (<600), the same thresholds the end
   screen uses
 - `/event/install` when the browser reports the PWA was installed
+- `/event/sponsor-info-click`, `/event/sponsor-contact-click` and `/event/sponsor-click/<id>`
+  for aggregate sponsor-interest and outbound-click counts
 
 Nothing else is sent: no answers, no exact scores, no user identifiers, no
 referrer beyond GoatCounter's defaults.
@@ -51,6 +53,22 @@ instead of sending them.
 
 Tests: `node --test tests/*.test.mjs`.
 
+## Sponsorship
+
+A small sponsor card appears on the hub and all four game result screens. While
+open, “Your ad here” links to `docs/sponsors.html`, which describes the placement
+and links to Joel's public GitHub profile for inquiries. The page states that
+there is not yet enough analytics history to publish audience numbers.
+
+To set the sponsor, edit `docs/data/sponsor.js` and replace
+`window.DSA_SPONSOR = null` with an object containing `id`, `name`, `message`
+and an `https://` `href`. After editing sponsor content, bump `CACHE_VERSION` in
+`docs/sw.js` so installed apps fetch the new config. The card then shows a
+“Sponsored” label and opens the sponsor link in a new tab. Text is inserted as
+text, not HTML. The GoatCounter event `/event/sponsor-click/<id>` counts clicks
+without recording user identifiers. A small “Sponsor DSArcade” footer link
+keeps the inquiry page available after a sponsor is configured.
+
 ## Structure
 
 ```
@@ -58,7 +76,8 @@ docs/
   index.html          hub
   manifest.webmanifest
   sw.js               cache-first service worker (bump CACHE_VERSION on changes)
-  assets/             shared styles, daily-seed helpers, MCQ engine, analytics
-  data/               question libraries
+  assets/             shared styles, daily-seed helpers, MCQ engine, analytics and sponsor renderer
+  data/               question libraries and sponsor configuration
+  sponsors.html       sponsorship details
   games/              one page per game
 ```
