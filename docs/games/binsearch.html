@@ -60,11 +60,14 @@
   </div>
 </div>
 <script src="../assets/app.js"></script>
+<script src="../assets/analytics.js"></script>
 <script>
 'use strict';
 const ROUNDS = isDaily() ? 5 : 8;
 const $ = id => document.getElementById(id);
 const daily = isDaily();
+const mode = daily ? 'daily' : 'practice';
+const track = (name, detail) => { if (window.dsaTrack) window.dsaTrack(name, detail); };
 document.getElementById('modeInfo').textContent = daily
   ? 'Daily: the same 5 searches for everyone today. Find each target in as few comparisons as you can.'
   : `Practice: ${ROUNDS} generated searches.`;
@@ -86,6 +89,7 @@ function skipGeneratedRound() {
 }
 
 function start() {
+  track('game-start', 'binsearch/' + mode);
   if (daily) rng = mulberry32(hashStr(todayKey() + ':binsearch'));
   const saved = daily ? dailyProgress('binsearch') : null;
   if (saved) {
@@ -222,6 +226,8 @@ function next() {
 }
 
 function end() {
+  track('game-end', 'binsearch/' + mode +
+    (window.dsaScoreBucket ? '/' + window.dsaScoreBucket(score) : ''));
   if (daily) clearDailyProgress('binsearch');
   $('gameScreen').style.display = 'none';
   $('endScreen').style.display = 'block';

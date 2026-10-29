@@ -1,7 +1,7 @@
 // Cache-first service worker for offline play. Bump CACHE_VERSION on content
 // changes that must reach installed clients.
 'use strict';
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './assets/style.css',
   './assets/app.js',
   './assets/mcq.js',
+  './assets/analytics.js',
   './data/pattern.js',
   './data/complexity.js',
   './data/bughunt.js',

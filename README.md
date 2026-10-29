@@ -24,6 +24,33 @@ Every game has a daily mode. The same questions are drawn for everyone on a give
 
 Each MCQ entry needs `q`, `options` (4), `answer` (index), and `why` (the one-line explanation shown after every answer — this is the learning payload, keep it sharp). Bug Hunt entries also include `code`, the snippet shown to the player.
 
+## Analytics
+
+`docs/assets/analytics.js` counts pageviews and a few events with GoatCounter
+(`dotjoel.goatcounter.com`). Cookieless: no cookies, no cross-site tracking, no
+personal data, no consent banner.
+
+Counted:
+
+- pageviews — `/home`, `/games/<game>`, with `/daily` on daily runs and `/app`
+  when the site is running as an installed app
+- `/event/game-start/<game>/<mode>`
+- `/event/game-end/<game>/<mode>/<bucket>`, bucket being `interview-ready`
+  (1000+), `solid` (600–999) or `drill` (<600), the same thresholds the end
+  screen uses
+- `/event/install` when the browser reports the PWA was installed
+
+Nothing else is sent: no answers, no exact scores, no user identifiers, no
+referrer beyond GoatCounter's defaults.
+
+Opt out with `?gc=off` (stored on the device; `?gc=on` reverses it). The counter
+does not load at all when Do Not Track or Global Privacy Control is set, on
+`file:` URLs, or under GoatCounter's localhost exclusion — local development
+never pollutes the dashboard. `?gcdebug=1` logs the payloads to the console
+instead of sending them.
+
+Tests: `node --test tests/*.test.mjs`.
+
 ## Structure
 
 ```
@@ -31,7 +58,7 @@ docs/
   index.html          hub
   manifest.webmanifest
   sw.js               cache-first service worker (bump CACHE_VERSION on changes)
-  assets/             shared styles, daily-seed helpers, MCQ engine
+  assets/             shared styles, daily-seed helpers, MCQ engine, analytics
   data/               question libraries
   games/              one page per game
 ```
