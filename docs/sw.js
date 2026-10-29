@@ -1,0 +1,47 @@
+// Cache-first service worker for offline play. Bump CACHE_VERSION on content
+// changes that must reach installed clients.
+'use strict';
+const CACHE_VERSION = 'v1';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './assets/style.css',
+  './assets/app.js',
+  './assets/mcq.js',
+  './data/pattern.js',
+  './data/complexity.js',
+  './games/pattern.html',
+  './games/complexity.html',
+  './games/binsearch.html',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached =>
+      cached ||
+      fetch(e.request).then(res => {
+        if (res.ok && new URL(e.request.url).origin === self.location.origin) {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then(c => c.put(e.request, copy));
+        }
+        return res;
+      }).catch(() => caches.match('./'))
+    )
+  );
+});

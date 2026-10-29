@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DSA Arcade — interview prep mini-games</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1117">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+<div class="app">
+  <h1 class="hub-title">DSA Arcade</h1>
+  <p class="hub-sub">Interview DSA, distilled into sub-minute games.<br>Daily mode: everyone gets the same questions each day.</p>
+  <div class="game-grid">
+    <a class="game-card" href="games/pattern.html?mode=daily">
+      <div>
+        <h2>🎯 Spot the Pattern</h2>
+        <p>Read the problem, pick the technique. 15 seconds.</p>
+      </div>
+      <span class="daily-tag" id="tag-pattern"></span>
+    </a>
+    <a class="game-card" href="games/complexity.html?mode=daily">
+      <div>
+        <h2>⏱️ Complexity Duel</h2>
+        <p>Read the code, name the Big-O. 20 seconds.</p>
+      </div>
+      <span class="daily-tag" id="tag-complexity"></span>
+    </a>
+    <a class="game-card" href="games/binsearch.html?mode=daily">
+      <div>
+        <h2>🔍 Binary Search Trainer</h2>
+        <p>Click the next index a correct binary search examines.</p>
+      </div>
+      <span class="daily-tag" id="tag-binsearch"></span>
+    </a>
+  </div>
+  <p class="hub-sub" style="margin-top:22px;font-size:12px">Daily resets at midnight UTC · progress stays on this device</p>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  for (const g of ['pattern', 'complexity', 'binsearch']) {
+    const s = dailyState(g);
+    const el = document.getElementById('tag-' + g);
+    if (s) { el.textContent = '✓ ' + s.score; el.className = 'daily-tag done'; }
+    else { el.textContent = 'Daily not done'; el.className = 'daily-tag todo'; }
+  }
+</script>
+</body>
+</html>
