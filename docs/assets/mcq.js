@@ -13,7 +13,20 @@ function runMcqGame(cfg) {
   let qStart = 0, timerId = null, locked = false;
 
   function start() {
-    idx = 0; score = 0; streak = 0; bestStreak = 0; missed = [];
+    const saved = daily ? dailyProgress(cfg.gameId) : null;
+    if (saved) {
+      idx = saved.idx; score = saved.score; streak = saved.streak;
+      bestStreak = saved.bestStreak; missed = saved.missed || [];
+      times.length = 0; times.push(...(saved.times || []));
+      $('startScreen').style.display = 'none';
+      $('endScreen').style.display = 'none';
+      $('gameScreen').style.display = 'block';
+      $('scoreNum').textContent = score;
+      $('streakNum').textContent = streak;
+      if (idx >= questions.length) end(); else show();
+      return;
+    }
+    idx = 0; score = 0; streak = 0; bestStreak = 0; missed = []; times.length = 0;
     $('startScreen').style.display = 'none';
     $('endScreen').style.display = 'none';
     $('gameScreen').style.display = 'block';
@@ -81,6 +94,7 @@ function runMcqGame(cfg) {
     $('streakNum').textContent = streak;
     $('nextBtn').style.display = 'block';
     $('nextBtn').textContent = idx + 1 < questions.length ? 'Next →' : 'See results →';
+    checkpoint();
   }
 
   function next() {
@@ -89,8 +103,14 @@ function runMcqGame(cfg) {
     else end();
   }
 
+  function checkpoint() {
+    // idx+1: the question just answered is consumed; resume at the next one.
+    if (daily) saveDailyProgress(cfg.gameId, { idx: idx + 1, score, streak, bestStreak, missed, times: [...times] });
+  }
+
   function end() {
     clearInterval(timerId);
+    if (daily) clearDailyProgress(cfg.gameId);
     $('gameScreen').style.display = 'none';
     $('endScreen').style.display = 'block';
     const avg = times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : '0';
