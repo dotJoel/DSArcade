@@ -7,12 +7,15 @@ function runMcqGame(cfg) {
   const $ = id => document.getElementById(id);
   const ROUND_SECONDS = cfg.roundSeconds || 20;
   const daily = isDaily();
+  const mode = daily ? 'daily' : 'practice';
+  const track = (name, detail) => { if (window.dsaTrack) window.dsaTrack(name, detail); };
   const questions = daily ? dailyPick(cfg.pool, cfg.gameId) : shuffleInPlace([...cfg.pool]).slice(0, 10);
 
   let idx = 0, score = 0, streak = 0, bestStreak = 0, missed = [];
   let qStart = 0, timerId = null, locked = false;
 
   function start() {
+    track('game-start', cfg.gameId + '/' + mode);
     const saved = daily ? dailyProgress(cfg.gameId) : null;
     if (saved) {
       idx = saved.idx; score = saved.score; streak = saved.streak;
@@ -109,6 +112,8 @@ function runMcqGame(cfg) {
   }
 
   function end() {
+    track('game-end', cfg.gameId + '/' + mode +
+      (window.dsaScoreBucket ? '/' + window.dsaScoreBucket(score) : ''));
     clearInterval(timerId);
     if (daily) clearDailyProgress(cfg.gameId);
     $('gameScreen').style.display = 'none';
