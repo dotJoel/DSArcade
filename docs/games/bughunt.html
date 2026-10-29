@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bug Hunt — DSA Arcade</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="app">
+  <div class="card screen" id="startScreen">
+    <h1>Bug Hunt</h1>
+    <p>Find the flaw in a short algorithm. Read the failing case, choose the fix, and learn the edge case before time runs out.</p>
+    <p id="modeInfo" style="font-size:13px;color:#6c7086"></p>
+    <div style="margin-bottom:20px">
+      <button class="btn" onclick="__startGame()">Start</button>
+      <button class="btn secondary" onclick="location='?mode=daily'" id="dailyBtn">Daily</button>
+    </div>
+    <a class="hlink" href="../index.html">← All games</a>
+  </div>
+
+  <div id="gameScreen" style="display:none">
+    <div class="header">
+      <span class="qnum" id="qnum"></span>
+      <span class="streak">Streak <b id="streakNum">0</b> · Score <b id="scoreNum" style="color:#4f8cff">0</b></span>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="card">
+      <div class="problem" id="problem"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" onclick="__nextQuestion()">Next →</button>
+    </div>
+  </div>
+
+  <div class="card screen" id="endScreen" style="display:none">
+    <h1 id="endTitle"></h1>
+    <div class="stats">
+      <div><b id="endScore">0</b><span>Score</span></div>
+      <div><b id="endBest">0</b><span>Best streak</span></div>
+      <div><b id="endAvg">0s</b><span>Avg time</span></div>
+    </div>
+    <p id="endMsg"></p>
+    <button class="btn" onclick="location.reload()">Play again</button>
+    <a class="btn secondary" style="display:inline-block;text-decoration:none" href="../index.html">All games</a>
+    <div class="missed" id="missedBox" style="display:none">
+      <h3>Review your misses</h3>
+      <ul id="missedList"></ul>
+    </div>
+  </div>
+</div>
+<script src="../data/bughunt.js"></script>
+<script src="../assets/app.js"></script>
+<script src="../assets/mcq.js"></script>
+<script>
+  const daily = isDaily();
+  document.getElementById('modeInfo').textContent = daily
+    ? 'Daily: the same 5 bugs for everyone today. Find the cause and fix.'
+    : 'Practice: 10 cases from the bug library.';
+  document.getElementById('dailyBtn').style.display = daily ? 'none' : '';
+  const escapeCode = text => text.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  runMcqGame({
+    gameId: 'bughunt',
+    pool: window.BUGHUNT_QUESTIONS,
+    roundSeconds: 20,
+    render: q => `${q.q}<div class="snippet-block">${escapeCode(q.code)}</div>`
+  });
+  if (daily) {
+    const prev = dailyState('bughunt');
+    if (prev) document.getElementById('modeInfo').textContent += ` Today's best: ${prev.score}.`;
+  }
+  if (new URLSearchParams(location.search).get('autoplay') === '1') window.__startGame();
+</script>
+</body>
+</html>
