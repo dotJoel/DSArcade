@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f1117">
+  <title>Sponsor DSArcade</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <main class="app sponsors-page">
+    <a class="hlink" href="index.html">← DSArcade</a>
+    <section class="card sponsors-card">
+      <p class="sponsor-eyebrow">Sponsor DSArcade</p>
+      <h1>Your ad here</h1>
+      <p>One clearly labelled text-and-link placement appears on the game hub and at the end of each game.</p>
+      <p>The placement is for a relevant developer or interview-preparation service. No popups, autoplay, or tracking pixels.</p>
+      <p>Traffic is being measured with cookieless, aggregate analytics. There is not enough history yet to publish audience numbers; I will share real figures once there is a useful baseline.</p>
+      <a class="btn sponsor-contact" href="https://github.com/dotJoel" target="_blank" rel="noopener noreferrer">Ask about sponsoring</a>
+    </section>
+  </main>
+  <script src="assets/app.js"></script>
+  <script src="assets/analytics.js"></script>
+  <script>
+    document.querySelector('.sponsor-contact').addEventListener('click', () => {
+      if (window.dsaTrack) window.dsaTrack('sponsor-contact-click');
+    });
+  </script>
+</body>
+</html>

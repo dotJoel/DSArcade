@@ -43,6 +43,7 @@
     <p id="endMsg"></p>
     <button class="btn" onclick="location.reload()">Play again</button>
     <a class="btn secondary" style="display:inline-block;text-decoration:none" href="../index.html">All games</a>
+    <section class="sponsor-slot" data-sponsor-slot aria-label="Sponsor"></section>
     <div class="missed" id="missedBox" style="display:none">
       <h3>Review your misses</h3>
       <ul id="missedList"></ul>
@@ -53,6 +54,8 @@
 <script src="../assets/app.js"></script>
 <script src="../assets/mcq.js"></script>
 <script src="../assets/analytics.js"></script>
+<script src="../data/sponsor.js"></script>
+<script src="../assets/sponsor.js"></script>
 <script>
   const daily = isDaily();
   document.getElementById('modeInfo').textContent = daily

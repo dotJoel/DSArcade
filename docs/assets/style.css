@@ -76,3 +76,23 @@ button.opt:disabled { cursor: default; opacity: 0.9; }
   background: #232634; border-radius: 10px; padding: 14px; font-family: ui-monospace, Menlo, monospace;
   font-size: 13px; line-height: 1.5; color: #c8d6f0; white-space: pre; overflow-x: auto; margin-bottom: 10px;
 }
+.sponsor-slot {
+  margin: 18px 0 0; padding: 14px 18px; text-align: center;
+  background: #141720; border: 1px solid var(--border); border-radius: 12px;
+}
+.sponsor-eyebrow {
+  display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px;
+  font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+}
+.sponsor-link { color: var(--muted); font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.sponsor-link:hover, .sponsor-link:focus-visible { color: var(--accent); }
+.sponsor-copy { margin: 5px 0 0 !important; color: var(--muted) !important; font-size: 12px !important; line-height: 1.45; }
+.sponsors-page > .hlink { display: inline-block; margin-bottom: 14px; }
+.sponsors-card h1 { margin-bottom: 16px; font-size: 26px; }
+.sponsors-card p { margin-bottom: 14px; color: var(--muted); line-height: 1.55; }
+.sponsors-card .sponsor-eyebrow { margin: 0 0 8px; color: var(--muted); }
+.sponsor-contact { display: inline-block; margin: 6px 0 0; text-decoration: none; }
+@media (max-width: 420px) {
+  .sponsor-slot { margin-top: 14px; padding: 12px 14px; }
+  .sponsors-card { padding: 20px; }
+}
