@@ -13,18 +13,19 @@
   }
   .cell:hover:not(:disabled) { border-color: var(--accent); }
   .cell:disabled { cursor: default; }
-  .cell.out { opacity: 0.25; }
-  .cell.mid { border-color: var(--accent); color: #9cc4ff; }
+  .cell.out { opacity: 0.22; cursor: default; }
+  .cell.used { opacity: 0.45; cursor: default; }
   .cell.correct { background: #1d3324; border-color: var(--good); color: #7ef0a8; }
   .cell.wrong { background: #3a1d22; border-color: var(--bad); color: #ff9b9b; }
   .cell.found { background: #1d3324; border-color: var(--good); color: #7ef0a8; }
+  .search-meta { text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px; }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="card screen" id="startScreen">
     <h1>Binary Search Trainer</h1>
-    <p>Click the index a correct binary search examines next. Bounds and target are given; the game is procedurally generated, so it never repeats.</p>
+    <p>Find the target in a sorted array — or prove it isn’t there. Each click reveals whether your guess is too low or too high. Use fewer comparisons to score more.</p>
     <p id="modeInfo" style="font-size:13px;color:#6c7086"></p>
     <div style="margin-bottom:20px">
       <button class="btn" onclick="start()">Start</button>
@@ -40,6 +41,7 @@
     <div class="card">
       <div class="problem" id="problem"></div>
       <div class="row" id="row"></div>
+      <div class="search-meta" id="searchMeta"></div>
       <div class="feedback" id="feedback"></div>
       <button class="next-btn" id="nextBtn" onclick="next()">Next →</button>
     </div>
@@ -50,7 +52,7 @@
     <div class="stats">
       <div><b id="endScore">0</b><span>Score</span></div>
       <div><b id="endBest">0</b><span>Best streak</span></div>
-      <div><b id="endRounds">0</b><span>Rounds won</span></div>
+      <div><b id="endRounds">0</b><span>Optimal</span></div>
     </div>
     <p id="endMsg"></p>
     <button class="btn" onclick="start()">Play again</button>
@@ -64,93 +66,130 @@ const ROUNDS = isDaily() ? 5 : 8;
 const $ = id => document.getElementById(id);
 const daily = isDaily();
 document.getElementById('modeInfo').textContent = daily
-  ? 'Daily: the same 5 generated searches for everyone today.'
+  ? 'Daily: the same 5 searches for everyone today. Find each target in as few comparisons as you can.'
   : `Practice: ${ROUNDS} generated searches.`;
 
-let rng, round = 0, score = 0, streak = 0, bestStreak = 0, wins = 0;
-let arr = [], target = 0, lo = 0, hi = 0, solved = false;
+let rng, round = 0, score = 0, streak = 0, bestStreak = 0, resolved = 0, optimalRounds = 0;
+let arr = [], target = 0, lo = 0, hi = 0, comparisons = 0, done = false;
+let par = 0, used = new Set(), foundIndex = null;
+
+function rand() { return daily ? rng() : Math.random(); }
 
 function start() {
   if (daily) rng = mulberry32(hashStr(todayKey() + ':binsearch'));
-  round = 0; score = 0; streak = 0; bestStreak = 0; wins = 0;
+  round = 0; score = 0; streak = 0; bestStreak = 0; resolved = 0; optimalRounds = 0;
   $('startScreen').style.display = 'none';
   $('endScreen').style.display = 'none';
   $('gameScreen').style.display = 'block';
-  next();
+  newRound();
 }
 
 function newRound() {
-  const n = 10 + Math.floor((daily ? rng() : Math.random()) * 7); // 10..16 cells
+  const n = 16 + Math.floor(rand() * 9); // 16..24 sorted values
   arr = [];
-  let v = Math.floor((daily ? rng() : Math.random()) * 9);
-  for (let i = 0; i < n; i++) { v += 1 + Math.floor((daily ? rng() : Math.random()) * 12); arr.push(v); }
-  const present = (daily ? rng() : Math.random()) < 0.7;
-  if (present) target = arr[Math.floor((daily ? rng() : Math.random()) * n)];
-  else { do { target = arr[0] + Math.floor((daily ? rng() : Math.random()) * (arr[n-1] - arr[0] + 3)); } while (arr.includes(target)); }
-  lo = 0; hi = n - 1; solved = false;
+  let v = Math.floor(rand() * 9);
+  for (let i = 0; i < n; i++) { v += 2 + Math.floor(rand() * 10); arr.push(v); }
+  const present = rand() < 0.72;
+  if (present) target = arr[Math.floor(rand() * n)];
+  else {
+    // Choose a value strictly between the array extremes that is not present.
+    const gaps = [];
+    for (let i = 0; i < arr.length - 1; i++) {
+      for (let x = arr[i] + 1; x < arr[i + 1]; x++) gaps.push(x);
+    }
+    target = gaps[Math.floor(rand() * gaps.length)];
+  }
+  lo = 0; hi = n - 1; comparisons = 0; done = false; used = new Set(); foundIndex = null;
+  par = Math.ceil(Math.log2(n + 1));
   $('feedback').className = 'feedback';
   $('nextBtn').style.display = 'none';
-  $('qnum').textContent = `Search ${Math.min(round + 1, ROUNDS)} of ${ROUNDS}${daily ? ' · Daily' : ' · Practice'}`;
-  $('problem').innerHTML = `Target: <code>${target}</code> — click the next index a correct binary search examines.`;
+  $('qnum').textContent = `Search ${round + 1} of ${ROUNDS}${daily ? ' · Daily' : ' · Practice'}`;
+  $('problem').innerHTML = `Find <code>${target}</code>. Pick a value to compare; use the clues to narrow the search.`;
   renderRow();
+  updateMeta();
 }
 
 function renderRow() {
   const row = $('row'); row.innerHTML = '';
   arr.forEach((v, i) => {
     const b = document.createElement('button');
-    b.className = 'cell' + (i < lo || i > hi ? ' out' : '');
+    b.className = 'cell' + (i < lo || i > hi ? ' out' : '') + (used.has(i) ? ' used' : '') + (i === foundIndex ? ' found' : '');
     b.textContent = v;
-    b.onclick = () => pick(i, b);
+    b.disabled = done || i < lo || i > hi || used.has(i);
+    b.onclick = () => guess(i, b);
     row.appendChild(b);
   });
 }
 
-function correctMid() { return (lo + hi) >> 1; }
+function updateMeta() {
+  const bounds = lo <= hi ? `Search range: indices ${lo}–${hi} (${hi - lo + 1} values)` : 'Search range is empty';
+  $('searchMeta').textContent = `${bounds} · Comparisons: ${comparisons}/${par} for optimal`;
+}
 
-function pick(i, btn) {
-  if (solved) return;
-  const cm = correctMid();
-  const cells = document.querySelectorAll('.cell');
-  if (i === cm) {
-    const m = cm;
-    if (arr[m] === target) {
-      btn.classList.add('found'); solved = true; wins++;
-      streak++; bestStreak = Math.max(bestStreak, streak);
-      score += 100 + streak * 20;
-      fb(`✅ Found at index ${m} in this step (+${100 + streak * 20}).`, true);
-    } else if (arr[m] < target) {
-      lo = m + 1; btn.classList.add('correct');
-      score += 25;
-      fb(`Right — arr[${m}] = ${arr[m]} < ${target}, so the target can only be right of it. lo = ${lo}.`, true);
-    } else {
-      hi = m - 1; btn.classList.add('correct');
-      score += 25;
-      fb(`Right — arr[${m}] = ${arr[m]} > ${target}, so the target can only be left of it. hi = ${hi}.`, true);
-    }
-  } else {
-    solved = true;
-    streak = 0;
-    cells[cm].classList.add('correct');
-    btn.classList.add('wrong');
-    fb(`❌ A correct binary search examines index ${cm} — the mid of lo=${lo}, hi=${hi}, i.e. (${lo}+${hi})>>1 = ${cm}.`, false);
+function guess(i, btn) {
+  if (done || i < lo || i > hi || used.has(i)) return;
+  const value = arr[i];
+  comparisons++;
+  used.add(i);
+  if (value === target) {
+    foundIndex = i;
+    finishRound(true, `🎯 Found ${target} after ${comparisons} comparison${comparisons === 1 ? '' : 's'}.`);
+    return;
   }
-  cells.forEach(c => c.disabled = true);
+
+  if (value < target) {
+    lo = i + 1;
+    btn.classList.add('correct');
+    showFeedback(`${value} is too low — target is higher. Discard indices through ${i}.`, true);
+  } else {
+    hi = i - 1;
+    btn.classList.add('correct');
+    showFeedback(`${value} is too high — target is lower. Discard indices from ${i}.`, true);
+  }
+
+  if (lo > hi) {
+    finishRound(false, `✅ The range is empty, so ${target} is not in the array. Proven in ${comparisons} comparison${comparisons === 1 ? '' : 's'}.`);
+    return;
+  }
+  renderRow();
+  updateMeta();
+}
+
+function showFeedback(text, ok) {
+  const f = $('feedback');
+  f.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  f.textContent = text;
+}
+
+function finishRound(found, message) {
+  done = true;
+  resolved++;
+  const optimal = comparisons <= par;
+  if (optimal) {
+    optimalRounds++;
+    streak++;
+    bestStreak = Math.max(bestStreak, streak);
+    const gained = Math.max(30, 120 + (par - comparisons) * 25 + streak * 15);
+    score += gained;
+    message += ` Optimal search (+${gained} points).`;
+  } else {
+    streak = 0;
+    const gained = 30;
+    score += gained;
+    message += ` ${comparisons - par} over the optimal budget (+${gained} points).`;
+  }
+  showFeedback(message, optimal);
+  renderRow();
+  updateMeta();
   $('scoreNum').textContent = score;
   $('streakNum').textContent = streak;
   $('nextBtn').style.display = 'block';
-  $('nextBtn').textContent = round + 1 < ROUNDS ? 'Next →' : 'See results →';
-}
-
-function fb(html, ok) {
-  const f = $('feedback');
-  f.className = 'feedback show ' + (ok ? 'ok' : 'no');
-  f.innerHTML = html;
+  $('nextBtn').textContent = round + 1 < ROUNDS ? 'Next search →' : 'See results →';
 }
 
 function next() {
   round++;
-  if (round <= ROUNDS) newRound();
+  if (round < ROUNDS) newRound();
   else end();
 }
 
@@ -159,16 +198,17 @@ function end() {
   $('endScreen').style.display = 'block';
   $('endScore').textContent = score;
   $('endBest').textContent = bestStreak;
-  $('endRounds').textContent = wins + '/' + ROUNDS;
+  $('endRounds').textContent = `${optimalRounds}/${ROUNDS}`;
   if (daily) {
     const prev = dailyState('binsearch');
-    const res = { score: prev ? Math.max(prev.score, score) : score, best: prev ? Math.max(prev.best, bestStreak) : bestStreak };
+    const res = {
+      score: prev ? Math.max(prev.score, score) : score,
+      best: prev ? Math.max(prev.best, bestStreak) : bestStreak
+    };
     saveDaily('binsearch', res);
   }
-  $('endTitle').textContent = wins === ROUNDS ? 'Perfect bounds 🎯' : wins >= ROUNDS / 2 ? 'Solid 👍' : 'Keep drilling 📚';
-  $('endMsg').textContent = wins === ROUNDS
-    ? 'Your mid calculations are automatic. Now write it without overflow bugs.'
-    : 'The mid is always (lo + hi) >> 1 of the *current* bounds — check the shaded region before clicking.';
+  $('endTitle').textContent = optimalRounds === ROUNDS ? 'Optimal search 🎯' : optimalRounds >= ROUNDS / 2 ? 'Good search instincts 👍' : 'Reduce the range 📚';
+  $('endMsg').textContent = `${optimalRounds} of ${ROUNDS} searches were resolved within the comparison budget. Binary search works by discarding half the remaining range after each comparison.`;
 }
 </script>
 </body>
