@@ -1,6 +1,6 @@
 # DSA Arcade
 
-Interview data-structures-and-algorithms questions distilled into sub-minute browser games. The training target is pattern recognition: reading a problem and mapping it to the right technique before writing code.
+Interview data-structures-and-algorithms questions distilled into sub-minute browser games. The games train pattern recognition, complexity analysis, code debugging, and algorithm execution.
 
 Hosted at `https://dotjoel.github.io/dsa-arcade/` (GitHub Pages from `/docs`). Installable as a web app (PWA) — add to home screen for offline play.
 
@@ -8,6 +8,7 @@ Hosted at `https://dotjoel.github.io/dsa-arcade/` (GitHub Pages from `/docs`). I
 
 - **Spot the Pattern** — a problem statement, four techniques, 15 seconds. Trains problem→technique mapping.
 - **Complexity Duel** — a code snippet, four Big-O answers, 20 seconds. Trains cost analysis including amortized and worst-case follow-ups.
+- **Bug Hunt** — identify the bug behind a failing case and choose a fix. Covers binary search, hashing, stacks, graphs, recursion, and edge cases.
 - **Binary Search Trainer** — search a sorted array for a target (or prove it's absent) using higher/lower feedback. Scores reward solving within the optimal comparison budget. Procedurally generated rounds.
 
 ## Daily mode
@@ -18,9 +19,10 @@ Every game has a daily mode. The same questions are drawn for everyone on a give
 
 - `docs/data/pattern.js` — curated problem/technique questions
 - `docs/data/complexity.js` — curated Big-O questions
+- `docs/data/bughunt.js` — curated code bugs with failing cases and fixes
 - `docs/games/binsearch.html` — procedural generator (no library needed)
 
-Each library entry needs `q`, `options` (4), `answer` (index), `why` (the one-line explanation shown after every answer — this is the learning payload, keep it sharp).
+Each MCQ entry needs `q`, `options` (4), `answer` (index), and `why` (the one-line explanation shown after every answer — this is the learning payload, keep it sharp). Bug Hunt entries also include `code`, the snippet shown to the player.
 
 ## Structure
 

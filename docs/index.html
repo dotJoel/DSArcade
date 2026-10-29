@@ -29,6 +29,13 @@
       </div>
       <span class="daily-tag" id="tag-complexity"></span>
     </a>
+    <a class="game-card" href="games/bughunt.html?mode=daily">
+      <div>
+        <h2>🕵️ Bug Hunt</h2>
+        <p>Find the flaw in a code snippet and choose the fix.</p>
+      </div>
+      <span class="daily-tag" id="tag-bughunt"></span>
+    </a>
     <a class="game-card" href="games/binsearch.html?mode=daily">
       <div>
         <h2>🔍 Binary Search Trainer</h2>
@@ -41,7 +48,7 @@
 </div>
 <script src="assets/app.js"></script>
 <script>
-  for (const g of ['pattern', 'complexity', 'binsearch']) {
+  for (const g of ['pattern', 'complexity', 'binsearch', 'bughunt']) {
     const s = dailyState(g);
     const el = document.getElementById('tag-' + g);
     if (s) { el.textContent = '✓ ' + s.score; el.className = 'daily-tag done'; }
