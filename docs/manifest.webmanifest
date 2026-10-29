@@ -1,6 +1,6 @@
 {
-  "name": "DSA Arcade",
-  "short_name": "DSA Arcade",
+  "name": "DSArcade",
+  "short_name": "DSArcade",
   "description": "Interview DSA distilled into sub-minute games. Daily mode: same questions for everyone, each day.",
   "start_url": "./index.html",
   "scope": "./",

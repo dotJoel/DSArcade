@@ -1,8 +1,8 @@
-# DSA Arcade
+# DSArcade
 
 Interview data-structures-and-algorithms questions distilled into sub-minute browser games. The games train pattern recognition, complexity analysis, code debugging, and algorithm execution.
 
-Hosted at `https://dotjoel.github.io/dsa-arcade/` (GitHub Pages from `/docs`). Installable as a web app (PWA) — add to home screen for offline play.
+Hosted at `https://dotjoel.github.io/DSArcade/` (GitHub Pages from `/docs`). Installable as a web app (PWA) — add to home screen for offline play.
 
 ## Games
 
