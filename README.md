@@ -8,7 +8,7 @@ Hosted at `https://dotjoel.github.io/dsa-arcade/` (GitHub Pages from `/docs`). I
 
 - **Spot the Pattern** — a problem statement, four techniques, 15 seconds. Trains problem→technique mapping.
 - **Complexity Duel** — a code snippet, four Big-O answers, 20 seconds. Trains cost analysis including amortized and worst-case follow-ups.
-- **Binary Search Trainer** — click the index a correct binary search examines next. Procedurally generated, so it never repeats.
+- **Binary Search Trainer** — search a sorted array for a target (or prove it's absent) using higher/lower feedback. Scores reward solving within the optimal comparison budget. Procedurally generated rounds.
 
 ## Daily mode
 
