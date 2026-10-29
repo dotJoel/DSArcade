@@ -1,7 +1,7 @@
 // Cache-first service worker for offline play. Bump CACHE_VERSION on content
 // changes that must reach installed clients.
 'use strict';
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const ASSETS = [
   './',
   './index.html',
@@ -20,6 +20,7 @@ const ASSETS = [
   './games/complexity.html',
   './games/bughunt.html',
   './games/binsearch.html',
+  './games/trainyard.html',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];

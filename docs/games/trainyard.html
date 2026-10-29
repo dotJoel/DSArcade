@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Train Yard — DSArcade</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .yard { display: flex; flex-direction: column; gap: 14px; margin: 14px 0; }
+  .track-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+  .target-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .target-car {
+    min-width: 34px; padding: 5px 8px; border-radius: 8px; text-align: center;
+    background: #232634; border: 1px solid #34384d; font-weight: 700; font-size: 14px; color: var(--muted);
+  }
+  .target-car.pending { color: var(--text); }
+  .target-car.next { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .yard-main { display: flex; gap: 14px; align-items: stretch; }
+  .siding { flex: 0 0 96px; min-height: 150px; border: 1px dashed #34384d; border-radius: 10px; padding: 8px; display: flex; flex-direction: column-reverse; align-items: center; gap: 6px; }
+  .siding .track-label { writing-mode: vertical-rl; transform: rotate(180deg); position: absolute; }
+  .siding-car {
+    width: 78px; padding: 8px 0; border-radius: 8px; text-align: center; font-weight: 700; font-size: 15px;
+    background: #2c3044; border: 1px solid #4a4f6b; color: var(--text);
+  }
+  .siding-car.top { cursor: pointer; border-color: var(--streak); color: var(--streak); }
+  .siding-car.top:hover { border-color: var(--accent); }
+  .siding-car:disabled { cursor: default; opacity: 0.6; }
+  .siding-empty { color: var(--dim); font-size: 12px; padding: 12px 0; }
+  .inbound { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .inbound-car {
+    padding: 10px; border-radius: 10px; background: #232634; border: 1px solid #34384d;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .inbound-car .car-id { font-weight: 700; font-size: 16px; }
+  .inbound-car button { flex: 1; max-width: 110px; }
+  .inbound-remaining { font-size: 12px; color: var(--dim); text-align: center; }
+  .outbound { display: flex; gap: 6px; flex-wrap: wrap; min-height: 34px; }
+  .out-car {
+    min-width: 34px; padding: 5px 8px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 14px;
+    background: #1d3324; border: 1px solid var(--good); color: #7ef0a8;
+  }
+  .out-car.bad { background: #3a1d22; border-color: var(--bad); color: #ff9b9b; }
+  .btn-mini {
+    padding: 6px 10px; border-radius: 8px; border: 1px solid #4a4f6b; background: #2c3044;
+    color: var(--text); font-size: 12px; cursor: pointer;
+  }
+  .btn-mini:hover:not(:disabled) { border-color: var(--accent); }
+  .btn-mini:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="card screen" id="startScreen">
+    <h1>Train Yard</h1>
+    <p>Boxcars roll in on the inbound track, in a fixed order. Route them onto the outbound track in the target order — using one siding for holding. Cars can only enter the siding at the back and leave from the front.</p>
+    <p id="modeInfo" style="font-size:13px;color:#6c7086"></p>
+    <div style="margin-bottom:20px">
+      <button class="btn" onclick="start()">Start</button>
+    </div>
+    <a class="hlink" href="../index.html">← All games</a>
+  </div>
+
+  <div id="gameScreen" style="display:none">
+    <div class="header">
+      <span class="qnum" id="qnum"></span>
+      <span class="streak">Streak <b id="streakNum">0</b> · Score <b id="scoreNum" style="color:#4f8cff">0</b></span>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="card">
+      <div class="yard">
+        <div>
+          <div class="track-label">Target outbound order</div>
+          <div class="target-row" id="targetRow"></div>
+        </div>
+        <div class="yard-main">
+          <div class="siding" id="siding"></div>
+          <div class="inbound">
+            <div class="track-label">Inbound — next car</div>
+            <div class="inbound-car" id="inboundCar"></div>
+            <div class="inbound-remaining" id="inboundRemaining"></div>
+          </div>
+        </div>
+        <div>
+          <div class="track-label">Outbound</div>
+          <div class="outbound" id="outbound"></div>
+        </div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" onclick="next()">Next →</button>
+    </div>
+  </div>
+
+  <div class="card screen" id="endScreen" style="display:none">
+    <h1 id="endTitle"></h1>
+    <div class="stats">
+      <div><b id="endScore">0</b><span>Score</span></div>
+      <div><b id="endBest">0</b><span>Best streak</span></div>
+      <div><b id="endOptimal">0</b><span>At par</span></div>
+    </div>
+    <p id="endMsg"></p>
+    <button class="btn" onclick="location.reload()">Play again</button>
+    <a class="btn secondary" style="display:inline-block;text-decoration:none" href="../index.html">All games</a>
+    <section class="sponsor-slot" data-sponsor-slot aria-label="Sponsor"></section>
+  </div>
+</div>
+<script src="../assets/app.js"></script>
+<script src="../assets/analytics.js"></script>
+<script src="../data/sponsor.js"></script>
+<script src="../assets/sponsor.js"></script>
+<script>
+'use strict';
+// Train Yard: a stack in disguise. The siding is LIFO — cars enter at the
+// back and leave from the front — so every solvable round is an exercise in
+// push/pop reasoning, and every failure names the stack constraint that bit.
+const ROUNDS = isDaily() ? 5 : 8;
+const ROUND_SECONDS = 30;
+const DRAWS_PER_ROUND = 24; // fixed rng budget per generated round (replay-safe)
+const $ = id => document.getElementById(id);
+const daily = isDaily();
+const mode = daily ? 'daily' : 'practice';
+const track = (name, detail) => { if (window.dsaTrack) window.dsaTrack(name, detail); };
+document.getElementById('modeInfo').textContent = daily
+  ? 'Daily: the same 5 yards for everyone today. Match the order using as few siding stops as you can.'
+  : `Practice: ${ROUNDS} generated yards. Wrong car sent out = derailed.`;
+
+let rng, round = 0, score = 0, streak = 0, bestStreak = 0, optimalRounds = 0;
+let perm = [], target = [], par = 0;
+let ai = 0, st = [], outIdx = 0, parked = 0, done = false;
+let timerId = null, timeLeft = 0;
+
+function rand() { return daily ? rng() : Math.random(); }
+
+function newRound() {
+  const n = 5 + Math.floor(rand() * 3); // 5..7 cars
+  perm = [];
+  for (let i = 1; i <= n; i++) perm.push(i);
+  for (let i = n - 1; i > 0; i--) { // Fisher-Yates, one draw per swap
+    const j = Math.floor(rand() * (i + 1));
+    [perm[i], perm[j]] = [perm[j], perm[i]];
+  }
+  // Generate a target reachable through the siding, making random push/pop
+  // choices; the first car is forced to park so the siding always matters.
+  // One rng draw per move, so the round's draw count is branch-independent.
+  target = [];
+  ai = 0; st = [];
+  st.push(perm[ai++]);
+  while (target.length < n) {
+    const r = rand();
+    const canPop = st.length > 0;
+    if (canPop && (ai >= perm.length || r < 0.45)) target.push(st.pop());
+    else if (ai < perm.length) st.push(perm[ai++]);
+    else target.push(st.pop());
+  }
+  // Par comes from an optimal greedy play of the generated target, not from
+  // the generation choices: pop when the siding top matches, send straight
+  // when the inbound front matches, park otherwise. Greedy is optimal for
+  // any stack-reachable target, so par = n + (minimal siding stops).
+  let gAi = 0; const gSt = []; let gOut = 0, gParked = 0;
+  while (gOut < n) {
+    if (gSt.length && gSt[gSt.length - 1] === target[gOut]) { gSt.pop(); gOut++; }
+    else if (gAi < n && perm[gAi] === target[gOut]) { gAi++; gOut++; }
+    else if (gAi < n) { gSt.push(perm[gAi++]); gParked++; }
+    else break; // unreachable for generated targets
+  }
+  // Every round must actually use the siding: if the greedy play parks
+  // nothing (target ended up equal to the inbound order), swap the first two
+  // target cars — deterministic, and it forces one parking stop.
+  if (gParked === 0) { [target[0], target[1]] = [target[1], target[0]]; gParked = 1; }
+  par = n + gParked;
+  // Pad to the fixed per-round rng budget so daily resume stays aligned.
+  const drawsUsed = 3 * n - 1; // 1 (size) + n-1 (shuffle) + 2n-1 (generate)
+  for (let d = drawsUsed; d < DRAWS_PER_ROUND; d++) rand();
+  ai = 0; st = []; outIdx = 0; parked = 0; done = false;
+  $('feedback').className = 'feedback';
+  $('feedback').textContent = '';
+  $('nextBtn').style.display = 'none';
+  $('qnum').textContent = `Yard ${round + 1} of ${ROUNDS}${daily ? ' · Daily' : ' · Practice'}`;
+  render();
+  startTimer();
+}
+
+function carLabel(v) { return '🚃 ' + v; }
+
+function render() {
+  // Target chips: solved ones dim, the next needed one highlighted.
+  const tr = $('targetRow'); tr.innerHTML = '';
+  target.forEach((v, i) => {
+    const d = document.createElement('span');
+    d.className = 'target-car' + (i === outIdx ? ' next' : i < outIdx ? '' : ' pending');
+    d.textContent = v;
+    tr.appendChild(d);
+  });
+  // Siding stack: only the top car is interactable.
+  const sd = $('siding'); sd.innerHTML = '';
+  if (!st.length) {
+    const e = document.createElement('div');
+    e.className = 'siding-empty'; e.textContent = 'empty';
+    sd.appendChild(e);
+  } else {
+    [...st].reverse().forEach((v, i) => {
+      const b = document.createElement('button');
+      b.className = 'siding-car' + (i === 0 ? ' top' : '');
+      b.textContent = carLabel(v);
+      b.disabled = done || i !== 0;
+      b.title = i === 0 ? 'Send this car out' : 'Buried — a stack only reaches the top';
+      b.onclick = () => sendOut(v, b);
+      sd.appendChild(b);
+    });
+  }
+  // Inbound: the next car, with send-out and park actions.
+  const ib = $('inboundCar'); ib.innerHTML = '';
+  if (ai < perm.length) {
+    const v = perm[ai];
+    const id = document.createElement('span');
+    id.className = 'car-id'; id.textContent = carLabel(v);
+    const out = document.createElement('button');
+    out.className = 'btn-mini'; out.textContent = '→ Out';
+    out.disabled = done;
+    out.onclick = () => sendOut(v, null);
+    const park = document.createElement('button');
+    park.className = 'btn-mini'; park.textContent = '→ Park';
+    park.disabled = done;
+    park.onclick = () => parkCar(v);
+    ib.appendChild(id); ib.appendChild(out); ib.appendChild(park);
+    $('inboundRemaining').textContent = `${perm.length - ai - 1} more behind it`;
+  } else {
+    ib.innerHTML = '<span style="color:var(--dim);font-size:13px">No cars left on the inbound track</span>';
+    $('inboundRemaining').textContent = '';
+  }
+  // Outbound: cars delivered so far.
+  const ob = $('outbound'); ob.innerHTML = '';
+  target.slice(0, outIdx).forEach(v => {
+    const d = document.createElement('span');
+    d.className = 'out-car'; d.textContent = v;
+    ob.appendChild(d);
+  });
+}
+
+function startTimer() {
+  clearInterval(timerId);
+  timeLeft = ROUND_SECONDS;
+  const fill = $('timerFill');
+  fill.style.transition = 'none'; fill.style.width = '100%';
+  requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.transition = 'width 0.1s linear'; }));
+  timerId = setInterval(() => {
+    timeLeft -= 0.1;
+    const frac = Math.max(0, timeLeft / ROUND_SECONDS);
+    fill.style.width = (frac * 100) + '%';
+    fill.className = 'timer-fill' + (frac < 0.3 ? ' low' : '');
+    if (timeLeft <= 0) failRound('⏰ Time ran out before the yard was cleared.', false);
+  }, 100);
+}
+
+function sendOut(v, btn) {
+  if (done) return;
+  const needed = target[outIdx];
+  if (v !== needed) {
+    if (btn) btn.classList.add('wrong');
+    const outboundEl = $('outbound');
+    const d = document.createElement('span');
+    d.className = 'out-car bad'; d.textContent = v;
+    outboundEl.appendChild(d);
+    const where = btn ? 'the top of the siding' : 'the front of the inbound track';
+    failRound(`❌ Car ${v} went out but ${needed} is needed next — the outbound order is broken. Car ${v} came from ${where}.`);
+    return;
+  }
+  if (btn) { // came from the siding: a pop
+    st.pop();
+  } else {
+    ai++; // straight through: no siding stop
+  }
+  outIdx++;
+  checkSolved();
+  checkJam();
+  if (!done) render();
+}
+
+// No cars inbound and the needed one is buried in the stack: the yard jams.
+function checkJam() {
+  if (done) return;
+  if (ai >= perm.length && st.length && st[st.length - 1] !== target[outIdx]) {
+    failRound(`❌ The yard is jammed. Car ${target[outIdx]} is buried under ${st[st.length - 1]} — the siding is a stack, so it only releases the last car parked. ${target[outIdx]} went in before ${st[st.length - 1]} and can't get out first.`);
+  }
+}
+
+function parkCar() {
+  if (done) return;
+  st.push(perm[ai++]);
+  parked++;
+  checkJam();
+  if (!done) render();
+}
+
+function checkSolved() {
+  if (outIdx < target.length) return;
+  clearInterval(timerId);
+  done = true;
+  const moves = target.length + parked;
+  let gained, ok;
+  if (moves <= par) {
+    optimalRounds++;
+    streak++; bestStreak = Math.max(bestStreak, streak);
+    gained = 120 + streak * 15;
+    ok = true;
+    showFeedback(`✅ Cleared in ${moves} moves — at par. (+${gained} points, streak ×${streak}). The greedy rule: when the next needed car is at the front, send it straight out; park only when it isn't.`, true);
+  } else {
+    streak = 0;
+    gained = 30;
+    ok = false;
+    showFeedback(`✅ Cleared in ${moves} moves (${moves - par} over par, +${gained} points). You parked a car that could have gone straight out — extra siding stops never help.`, false);
+  }
+  score += gained;
+  finishRoundUI();
+}
+
+function failRound(message, keepTimer) {
+  if (done) return;
+  if (!keepTimer) clearInterval(timerId);
+  done = true;
+  streak = 0;
+  showFeedback(message + ` The optimal route takes ${par} moves; the siding is a stack — last in, first out.`, false);
+  finishRoundUI();
+}
+
+function showFeedback(text, ok) {
+  const f = $('feedback');
+  f.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  f.textContent = text;
+}
+
+function finishRoundUI() {
+  $('scoreNum').textContent = score;
+  $('streakNum').textContent = streak;
+  $('nextBtn').style.display = 'block';
+  $('nextBtn').textContent = round + 1 < ROUNDS ? 'Next yard →' : 'See results →';
+  if (daily) saveDailyProgress('trainyard', { round: round + 1, score, streak, bestStreak, optimalRounds });
+}
+
+function next() {
+  round++;
+  if (round < ROUNDS) newRound();
+  else end();
+}
+
+function start() {
+  track('game-start', 'trainyard/' + mode);
+  if (daily) rng = mulberry32(hashStr(todayKey() + ':trainyard'));
+  const saved = daily ? dailyProgress('trainyard') : null;
+  if (saved) {
+    round = saved.round; score = saved.score; streak = saved.streak;
+    bestStreak = saved.bestStreak; optimalRounds = saved.optimalRounds;
+    $('startScreen').style.display = 'none';
+    $('endScreen').style.display = 'none';
+    $('gameScreen').style.display = 'block';
+    $('scoreNum').textContent = score;
+    $('streakNum').textContent = streak;
+    if (round >= ROUNDS) { end(); return; }
+    for (let r = 0; r < round; r++) skipGeneratedRound();
+    newRound();
+    showFeedback(`Resumed at yard ${round + 1} — score ${score}.`, true);
+    return;
+  }
+  round = 0; score = 0; streak = 0; bestStreak = 0; optimalRounds = 0;
+  $('startScreen').style.display = 'none';
+  $('endScreen').style.display = 'none';
+  $('gameScreen').style.display = 'block';
+  newRound();
+}
+
+// Replays the deterministic rng draws of one generated round without
+// rendering it, so a resumed session lands on the same yard as a fresh one.
+function skipGeneratedRound() {
+  for (let d = 0; d < DRAWS_PER_ROUND; d++) rand();
+}
+
+function end() {
+  track('game-end', 'trainyard/' + mode +
+    (window.dsaScoreBucket ? '/' + window.dsaScoreBucket(score) : ''));
+  clearInterval(timerId);
+  if (daily) clearDailyProgress('trainyard');
+  $('gameScreen').style.display = 'none';
+  $('endScreen').style.display = 'block';
+  $('endScore').textContent = score;
+  $('endBest').textContent = bestStreak;
+  $('endOptimal').textContent = `${optimalRounds}/${ROUNDS}`;
+  if (daily) {
+    const prev = dailyState('trainyard');
+    const res = {
+      score: prev ? Math.max(prev.score, score) : score,
+      best: prev ? Math.max(prev.best, bestStreak) : bestStreak
+    };
+    saveDaily('trainyard', res);
+  }
+  $('endTitle').textContent = optimalRounds === ROUNDS ? 'Yard master 🎯' : optimalRounds >= ROUNDS / 2 ? 'Smooth shunting 👍' : 'Watch the siding 📚';
+  $('endMsg').textContent = `${optimalRounds} of ${ROUNDS} yards were cleared at par. That siding is a stack: cars leave in reverse order of parking, so think LIFO before you park.`;
+}
+</script>
+</body>
+</html>

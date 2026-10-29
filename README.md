@@ -10,6 +10,7 @@ Hosted at `https://dotjoel.github.io/DSArcade/` (GitHub Pages from `/docs`). Ins
 - **Complexity Duel** — a code snippet, four Big-O answers, 20 seconds. Trains cost analysis including amortized and worst-case follow-ups.
 - **Bug Hunt** — identify the bug behind a failing case and choose a fix. Covers binary search, hashing, stacks, graphs, recursion, and edge cases.
 - **Binary Search Trainer** — search a sorted array for a target (or prove it's absent) using higher/lower feedback. Scores reward solving within the optimal comparison budget. Procedurally generated rounds.
+- **Train Yard** — route inbound boxcars through one siding to match the target outbound order. The siding is a stack (last in, first out), so every solve is push/pop reasoning in disguise. Scores reward solving at the optimal move count (minimal siding stops). Procedurally generated rounds.
 
 ## Daily mode
 
@@ -21,6 +22,7 @@ Every game has a daily mode. The same questions are drawn for everyone on a give
 - `docs/data/complexity.js` — curated Big-O questions
 - `docs/data/bughunt.js` — curated code bugs with failing cases and fixes
 - `docs/games/binsearch.html` — procedural generator (no library needed)
+- `docs/games/trainyard.html` — procedural generator (no library needed)
 
 Each MCQ entry needs `q`, `options` (4), `answer` (index), and `why` (the one-line explanation shown after every answer — this is the learning payload, keep it sharp). Bug Hunt entries also include `code`, the snippet shown to the player.
 
