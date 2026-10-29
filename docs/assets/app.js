@@ -61,6 +61,22 @@ function saveDaily(game, res) {
 
 function isDaily() { return new URLSearchParams(location.search).get('mode') === 'daily'; }
 
+// Resume state for today's daily run: lets a player close the tab mid-round
+// and pick up where they left off. Cleared when the run finishes or the day
+// rolls over (dailyProgress returns null for stale dates).
+function dailyProgress(game) {
+  const p = store.get('dsa:' + game + ':progress', null);
+  return p && p.date === todayKey() ? p : null;
+}
+
+function saveDailyProgress(game, p) {
+  store.set('dsa:' + game + ':progress', { date: todayKey(), ...p });
+}
+
+function clearDailyProgress(game) {
+  localStorage.removeItem('dsa:' + game + ':progress');
+}
+
 function shuffleInPlace(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

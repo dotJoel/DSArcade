@@ -75,8 +75,35 @@ let par = 0, used = new Set(), foundIndex = null;
 
 function rand() { return daily ? rng() : Math.random(); }
 
+// Replays the deterministic rng draws of one generated round without
+// rendering it, so a resumed session lands on the same round as a fresh one.
+function skipGeneratedRound() {
+  const n = 16 + Math.floor(rand() * 9);
+  rand();
+  for (let i = 0; i < n; i++) rand();
+  rand();
+  rand();
+}
+
 function start() {
   if (daily) rng = mulberry32(hashStr(todayKey() + ':binsearch'));
+  const saved = daily ? dailyProgress('binsearch') : null;
+  if (saved) {
+    round = saved.round; score = saved.score; streak = saved.streak;
+    bestStreak = saved.bestStreak; resolved = saved.resolved; optimalRounds = saved.optimalRounds;
+    $('startScreen').style.display = 'none';
+    $('endScreen').style.display = 'none';
+    $('gameScreen').style.display = 'block';
+    $('scoreNum').textContent = score;
+    $('streakNum').textContent = streak;
+    if (round >= ROUNDS) { end(); }
+    else {
+      for (let r = 0; r < round; r++) skipGeneratedRound();
+      newRound();
+      showFeedback(`Resumed at search ${round + 1} — score ${score}.`, true);
+    }
+    return;
+  }
   round = 0; score = 0; streak = 0; bestStreak = 0; resolved = 0; optimalRounds = 0;
   $('startScreen').style.display = 'none';
   $('endScreen').style.display = 'none';
@@ -185,6 +212,7 @@ function finishRound(found, message) {
   $('streakNum').textContent = streak;
   $('nextBtn').style.display = 'block';
   $('nextBtn').textContent = round + 1 < ROUNDS ? 'Next search →' : 'See results →';
+  if (daily) saveDailyProgress('binsearch', { round: round + 1, score, streak, bestStreak, resolved, optimalRounds });
 }
 
 function next() {
@@ -194,6 +222,7 @@ function next() {
 }
 
 function end() {
+  if (daily) clearDailyProgress('binsearch');
   $('gameScreen').style.display = 'none';
   $('endScreen').style.display = 'block';
   $('endScore').textContent = score;
